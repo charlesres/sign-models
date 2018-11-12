@@ -513,9 +513,9 @@ ticks
 
 BUTTON
 20
-66
+65
 91
-99
+98
 setup
 setup
 NIL
@@ -529,10 +529,10 @@ NIL
 1
 
 BUTTON
-94
-66
-181
-99
+90
+65
+177
+98
 go-once
 go
 NIL
@@ -546,9 +546,9 @@ NIL
 1
 
 BUTTON
-180
+175
 65
-243
+238
 98
 go
 go
@@ -565,7 +565,7 @@ NIL
 PLOT
 895
 290
-1299
+1295
 463
 number-of-food-source
 NIL
@@ -581,9 +581,9 @@ PENS
 "default" 0.01 0 -16777216 true "" "plot count food-sources"
 
 PLOT
-898
+895
 470
-1305
+1295
 610
 number-of-signs
 NIL
@@ -600,9 +600,9 @@ PENS
 
 SLIDER
 20
-115
+110
 197
-148
+143
 wiggle-preference
 wiggle-preference
 -10
@@ -618,7 +618,7 @@ PLOT
 10
 1435
 233
-wiggle-deviation
+Maximum Turning Angle
 NIL
 NIL
 0.0
@@ -629,14 +629,14 @@ true
 false
 "" ""
 PENS
-"max-wiggle" 0.1 2 -2674135 true "" "plot extract-wiggle-deviation max-one-of rats [ wiggle-deviation ]"
-"min-wiggle" 0.1 2 -13345367 true "" "plot extract-wiggle-deviation min-one-of rats [ wiggle-deviation ]"
+"max-turn" 0.1 2 -2674135 true "" "plot extract-wiggle-deviation max-one-of rats [ wiggle-deviation ]"
+"min-turn" 0.1 2 -13345367 true "" "plot extract-wiggle-deviation min-one-of rats [ wiggle-deviation ]"
 
 SLIDER
-21
-152
-197
-185
+20
+140
+195
+173
 likelihood-preference
 likelihood-preference
 -10
@@ -648,10 +648,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-21
-189
-193
-222
+20
+170
+195
+203
 sign-preference
 sign-preference
 -10
@@ -663,10 +663,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-21
-226
-193
-259
+20
+200
+195
+233
 lying-preference
 lying-preference
 -10
@@ -679,9 +679,9 @@ HORIZONTAL
 
 PLOT
 20
-342
+305
 220
-492
+455
 Feed Rats
 NIL
 NIL
@@ -696,25 +696,25 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot surviving-rats"
 
 SLIDER
-25
-265
-199
-298
+20
+235
+194
+268
 number-of-rats
 number-of-rats
 10
 50
-20.0
+15.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-29
-302
-203
-335
+20
+270
+194
+303
 starting-radius
 starting-radius
 5
@@ -726,11 +726,11 @@ NIL
 HORIZONTAL
 
 BUTTON
-36
-550
-168
-585
-Switch Layout
+20
+455
+167
+486
+Change Topology
 alternate-topology
 NIL
 1
