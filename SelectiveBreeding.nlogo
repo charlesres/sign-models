@@ -1,5 +1,11 @@
-globals [ world-timer surviving-rats surviving-signs enable-wrapping? number-of-previous-food-sources
-          animation-timer]
+globals [
+          world-timer
+          surviving-rats
+	  surviving-signs
+	  enable-wrapping?
+          number-of-previous-food-sources
+	  animation-timer
+	  ]
 
 ;; What is this code for?
 
@@ -446,7 +452,7 @@ to eating-animation
   ]
   if animation-timer != 20 [
     if animation-timer = 0 [
-      create-turtles 1 [ set shape "circle" set color magenta setxy 0 0 set size 10 facexy 0 100 ]
+      create-turtles 1 [ set shape "circle" set color magenta setxy 0 0 set size 4 facexy 0 100 ]
     ]
     ask turtles with [ shape = "circle" ] [ fd 1 ]
     if animation-timer = 19 [
@@ -481,11 +487,11 @@ end
 GRAPHICS-WINDOW
 250
 10
-1528
-1289
+893
+654
 -1
 -1
-6.32
+3.16
 1
 10
 1
@@ -557,10 +563,10 @@ NIL
 1
 
 PLOT
-1530
-10
-1934
-183
+895
+290
+1299
+463
 number-of-food-source
 NIL
 NIL
@@ -575,10 +581,10 @@ PENS
 "default" 0.01 0 -16777216 true "" "plot count food-sources"
 
 PLOT
-1533
-190
-1940
-330
+898
+470
+1305
+610
 number-of-signs
 NIL
 NIL
@@ -608,10 +614,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1530
-335
-2070
-558
+895
+10
+1435
+233
 wiggle-deviation
 NIL
 NIL
