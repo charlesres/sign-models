@@ -1,4 +1,11 @@
-globals [ world-timer surviving-rats surviving-signs ]
+globals [
+          world-timer
+          surviving-rats
+	  surviving-signs
+	  enable-wrapping?
+          number-of-previous-food-sources
+	  animation-timer
+	  ]
 
 ;; What is this code for?
 
@@ -26,10 +33,6 @@ patches-own [
 ]
 
 rating-systems-own [
-  patch-batch
-  rat-batch
-  food-batch
-  sign-batch
   variation
 ]
 
@@ -45,23 +48,26 @@ food-sources-own [
 ]
 
 rats-own [
-  wiggle-deviation
-  likelihood-to-drop
-  sign-deviation
-  probability-of-lying
+  wiggle-deviation     ;; the range of possible angle deviation
+  likelihood-to-drop   ;; the probability of dropping a sign every tick
+  sign-deviation       ;; the range of possible angle deviation
+  probability-of-lying ;; the probability of lying about the direction of the food source
 
-  location-of-xsign
-  location-of-ysign
+  location-of-xsign    ;; x-coordinate of the food source
+  location-of-ysign    ;; y-coordinate of the food source
 
-  trigger-found?
-  trigger-location-x
-  trigger-location-y
+  found-sign?          ;; indicator for having found a sign
+  trigger-location-x   ;;
+  trigger-location-y   ;;
 
-  found-food?
-  heading-out?
-  can-drop-flag?
-  the-sign-that-helped
-  number-eaten
+  found-food?          ;; indicator for having found food
+  survived?            ;; indicator for surviving rats
+  heading-out?         ;;
+  can-drop-flag?       ;;
+  the-sign-that-helped ;;
+  number-eaten         ;;
+  viewed-sign-color
+  own-sign
 ]
 
 ;; Logic for the rats
@@ -71,27 +77,27 @@ to generate-rats [ number ]
     set wiggle-deviation random 180
     set likelihood-to-drop random 5
     set sign-deviation random 45
-    set probability-of-lying random 20
+    set probability-of-lying random 10
 
     set location-of-xsign 0
     set location-of-ysign 0
-
-    set trigger-found? false
+    set found-sign? false
     set trigger-location-x 0
     set trigger-location-y 0
 
     set found-food? false ;; possibly give a review
-    set heading-out? false
+    set survived? false
     set number-eaten 0
     set the-sign-that-helped nobody
+    set own-sign nobody
 
     setxy random-xcor random-ycor
-    if food-sources in-radius 16 != no-turtles [
+    while [ food-sources in-radius starting-radius != no-turtles ] [
       setxy random-xcor random-ycor
     ]
-    set color blue
+    set color gray
     set shape "default"
-    set size 3
+    set size 5
   ]
 end
 
@@ -119,7 +125,7 @@ end
 ;; contributor
 ;; active sign suggestion
 
-to generate-new-rats [ number wig-dev likely sign-dev prob-lie]
+to generate-new-rats [ number wig-dev likely sign-dev prob-lie ]
   create-rats number [
     set wiggle-deviation adjust-degrees (wig-dev + random-wiggle)         ;; adjust wiggle-deviation
     set likelihood-to-drop adjust-percentage (likely + random-likely)     ;; adjust probability to drop a sign
@@ -128,34 +134,45 @@ to generate-new-rats [ number wig-dev likely sign-dev prob-lie]
 
     set location-of-xsign 0
     set location-of-ysign 0
-    set trigger-found? false
     set trigger-location-x 0
     set trigger-location-y 0
 
     set found-food? false ;; possibly give a review
+    set found-sign? false
+    set survived? false
     set number-eaten 0
     set the-sign-that-helped nobody
+    set own-sign nobody
 
     setxy random-xcor random-ycor
-    if food-sources in-radius 16 != no-turtles [
+    while [ food-sources in-radius starting-radius != no-turtles ] [
       setxy random-xcor random-ycor
     ]
     set color blue
     set shape "default"
-    set size 3
+    set size 5
   ]
+end
+
+to draw-radius-bound
+  ask patches in-radius starting-radius  [set pcolor scale-color red 1.8 0 10 ]
+  ask patches in-radius (starting-radius * (.75)) [set pcolor scale-color green 1.8 0 10 ]
 end
 
 to generate-food [ num ]
   ask patches [ set pcolor black ]
+  if any? food-sources [
+    ask food-sources [ draw-radius-bound ]
+  ]
   if count food-sources < 17 [
-  create-food-sources num [ setxy (0 - random 10 + 5) (0 - random 10 + 5)
-                            set   color orange
-			    set   size  4
-			    let   xcore xcor
-			    let   ycore ycor
-                            ask   patches in-radius 15 [ set pcolor scale-color gray 1.8 0 10 ]
-			    set   shape "square" ]]
+    create-food-sources num [
+        setxy (0 - random 10 + 5) (0 - random 10 + 5)
+        set   color orange
+        set   size  4
+        let   xcore xcor
+        let   ycore ycor
+        draw-radius-bound
+        set   shape "square" ]]
 end
 
 to generate-spots
@@ -172,6 +189,9 @@ end
 
 to initialize
   ask rats [ set the-sign-that-helped nobody set shape "default" ]
+  set number-of-previous-food-sources 0
+  set enable-wrapping? true
+  set animation-timer 20
 end
 
 to-report extract-number-eaten [ one-rat ]
@@ -189,7 +209,7 @@ end
 to setup
   clear-all
   generate-food 5
-  generate-rats 15
+  generate-rats number-of-rats
   initialize
   reset-ticks
 end
@@ -197,7 +217,21 @@ end
 to wiggle [ deviation ]
   left random deviation
   right random deviation
-  fd 1
+  move-with-collision
+end
+
+to alternate-topology
+  __change-topology enable-wrapping? enable-wrapping?
+  set enable-wrapping? not enable-wrapping?
+end
+
+to move-with-collision
+  let patch-destination patch-ahead 1
+  let patch-color blue
+  ifelse patch-destination != nobody [
+    ask patch-destination [ set patch-color pcolor ]
+    if patch-color != green [ fd 1 ]
+  ] [ left random 360 ]
 end
 
 to run-around
@@ -205,37 +239,46 @@ to run-around
 
   if signs in-radius 3 != no-turtles
     [ ask one-of signs in-radius 3 [
-        if creator != nobody [
-          ask creator [set number-eaten number-eaten + 1 ]
+        if creator != no-turtles [
+          ask creator [ set number-eaten number-eaten + 1 ]
         ]
       ]
     ] ;; what direction are you facing
-  fd 1
+  move-with-collision
 end
 
+;; lambdas can indicate traits and behaviors
+
 to eat-if-you-can
-  if food-sources in-radius 2 != no-turtles and found-food? = false
+  if any? (food-sources in-radius 2) and found-food? = false
     [ ask one-of food-sources in-radius 2 [ die ]
-      set number-eaten number-eaten + 1
-      set found-food? true
-      set heading-out? true
+      set number-eaten number-eaten + 1 ;; need a way to display eating
+      set found-food? true ;; should not eat any more
+      set found-sign? false
+      set survived? true
       set can-drop-flag? true
+      set color white
     ] ;; find sign or travel outside a radius
+
 end
 
 to update-orientation-with-sign
   if the-sign-that-helped != nobody [
-    let x-dir 0 let y-dir 0
-    ask the-sign-that-helped [ set x-dir x-mem set y-dir y-mem ]
-    facexy x-dir y-dir
+    let direction-x 0 let direction-y 0
+    ask the-sign-that-helped [ set direction-x x-mem set direction-y y-mem ]
+    facexy direction-x direction-y
   ]
+  if not any? (food-sources in-radius (starting-radius * (.75)))
+    [ set found-food? false set color gray set found-sign? false ]
 end
 
 to thank-the-sign ;; find that sign that helped you
   ;; how do you store that information
   if the-sign-that-helped != nobody [
+    set color pink
     face the-sign-that-helped
   ]
+  run-around
 end
 
 to-report extract-likely [ one-rat ]
@@ -278,23 +321,32 @@ end
 to regenerate-world
    generate-food 7
 
-   ask rats with [ found-food? = false ] [ die ]
-   if rats = no-turtles [ generate-rats 5 ]
+   ask rats with [ survived? = false ] [ die ]
+   if rats = no-turtles [ stop ] ;; generate-rats 5 ]
+
    ask rats [ ;; deviations of themselves
      readjust-wiggle-deviation
      readjust-likelihood
      set number-eaten 0
+
+     while [ food-sources in-radius starting-radius != no-turtles ] [
+       setxy random-xcor random-ycor
+     ]
      set found-food? false
+     set found-sign? false
+     set survived? false
      set can-drop-flag? false
+     set own-sign nobody
    ]
-   while [ count rats < 15 ] [
+   while [ count rats < number-of-rats ] [
      let survivor one-of rats with [ found-food? = true ]
      if survivor != no-turtles [ set survivor one-of rats ]
      generate-new-rats 1 (adjust-degrees extract-wiggle-deviation survivor)
                          (adjust-percentage extract-likely survivor)
                          (adjust-degrees extract-sign-dev survivor)
-			 (adjust-percentage extract-lies survivor)
+                         (adjust-percentage extract-lies survivor)
    ]
+   ask rats [ set color gray ]
    ask signs [ die ]
 end
 
@@ -315,12 +367,12 @@ to create-sign-by-rat
   let likelihood    0
   let si-deviation  0
   let prob-of-lying 0
-  let xdir 0
-  let ydir 0
+  let direct-x 0
+  let direct-y 0
 
   ask dropper [
-    set xdir xcor
-    set ydir ycor
+    set direct-x xcor
+    set direct-y ycor
     set likelihood likelihood-to-drop
     set si-deviation sign-deviation
     set prob-of-lying probability-of-lying
@@ -337,24 +389,25 @@ to create-sign-by-rat
           ask one-of food-sources [ set direction-x xcor set direction-y ycor ]
 
           left random si-deviation
-	    right random si-deviation
-          setxy xdir ydir
+          right random si-deviation
+          setxy direct-x direct-y
 
-          ifelse prob-of-lying < random 100 [
+          ifelse prob-of-lying > random 100 [
             facexy random-xcor random-ycor
             set color red
           ] [
             facexy direction-x direction-y
-	    ]
-          set color yellow
+            set color yellow
+          ]
       ]
     ]
+    ask dropper [ set own-sign one-of signs with [ creator = dropper ] ]
   ]
 end
 
 to global-tick ;; the generational clock
-
-  ifelse world-timer = 300 [
+  set number-of-previous-food-sources count food-sources
+  ifelse world-timer = 600 [
     set surviving-rats count rats with [ found-food? = true ]
     set surviving-signs count signs
     set world-timer 0
@@ -365,20 +418,60 @@ to global-tick ;; the generational clock
 end
 
 to generate-flags-if-possible
-  if rats with [ can-drop-flag? = true ] != no-turtles [ ;; it keeps generating triangles
+  if any? (rats with [ can-drop-flag? = true ]) [ ;; it keeps generating triangles
     if random 500 < 10 [ create-sign-by-rat ]
+  ]
+end
+
+to food-movement
+  ifelse found-sign? and not found-food? [ ;; sign found and food not found
+    ;; and sign doesn't equal your sign ;; could add timer
+    ifelse food-sources != no-turtles
+      [ ifelse viewed-sign-color = red
+          [ facexy random-xcor random-ycor ]
+          [ face one-of food-sources ]
+        run-around
+        set color green
+      ]
+      [ run-around ]
+    ] [ run-around ]
+end
+
+to sign-encounter ;; the rats can influence themselves
+  let sign-range 7
+  if any? signs in-radius sign-range and own-sign = nobody
+    [ set found-sign? true set color orange ] ;; what color sign did I see
+  ifelse any? signs in-radius (sign-range * .75) with [ color = red ]
+    [ set viewed-sign-color red ]
+    [ set viewed-sign-color yellow ]
+end
+
+to eating-animation
+  if number-of-previous-food-sources > count food-sources [
+    set animation-timer 0
+  ]
+  if animation-timer != 20 [
+    if animation-timer = 0 [
+      create-turtles 1 [ set shape "circle" set color magenta setxy 0 0 set size 4 facexy 0 100 ]
+    ]
+    ask turtles with [ shape = "circle" ] [ fd 1 ]
+    if animation-timer = 19 [
+      ask turtles with [ shape = "circle" ] [ die ]
+    ]
+    set animation-timer animation-timer + 1
   ]
 end
 
 to move-rats
   ask rats [
-      run-around
-        ifelse not found-food?
-          [ run-around     ]
-          [ thank-the-sign ]
-        update-orientation-with-sign ;; if I saw a sign update my direction
-        eat-if-you-can               ;; if you find food eat it, then update that you found it
+    ifelse not found-food?
+      [ food-movement ]
+      [ thank-the-sign ]
+    update-orientation-with-sign ;; if I saw a sign update my direction
+    eat-if-you-can               ;; if you find food eat it, then update that you found it
+    sign-encounter
   ]
+  eating-animation
 end
 
 to go ;; go will start the process for the rats
@@ -392,26 +485,26 @@ to test
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-262
+250
 10
-908
-657
+893
+654
 -1
 -1
-6.32
+3.16
 1
 10
 1
 1
 1
 0
+0
+0
 1
-1
-1
--50
-50
--50
-50
+-100
+100
+-100
+100
 1
 1
 1
@@ -470,10 +563,10 @@ NIL
 1
 
 PLOT
-924
-10
-1328
-183
+895
+290
+1299
+463
 number-of-food-source
 NIL
 NIL
@@ -485,13 +578,13 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count food-sources"
+"default" 0.01 0 -16777216 true "" "plot count food-sources"
 
 PLOT
-927
-190
-1334
-330
+898
+470
+1305
+610
 number-of-signs
 NIL
 NIL
@@ -503,7 +596,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot surviving-signs"
+"default" 0.01 0 -16777216 true "" "plot surviving-signs"
 
 SLIDER
 20
@@ -521,10 +614,10 @@ NIL
 HORIZONTAL
 
 PLOT
-928
-334
-1306
-500
+895
+10
+1435
+233
 wiggle-deviation
 NIL
 NIL
@@ -536,8 +629,8 @@ true
 false
 "" ""
 PENS
-"max-wiggle" 1.0 2 -2674135 true "" "plot extract-wiggle-deviation max-one-of rats [ wiggle-deviation ]"
-"min-wiggle" 1.0 0 -13345367 true "" "plot extract-wiggle-deviation min-one-of rats [ wiggle-deviation ]"
+"max-wiggle" 0.1 2 -2674135 true "" "plot extract-wiggle-deviation max-one-of rats [ wiggle-deviation ]"
+"min-wiggle" 0.1 2 -13345367 true "" "plot extract-wiggle-deviation min-one-of rats [ wiggle-deviation ]"
 
 SLIDER
 21
@@ -585,10 +678,10 @@ NIL
 HORIZONTAL
 
 PLOT
-25
-273
-225
-423
+20
+342
+220
+492
 Feed Rats
 NIL
 NIL
@@ -601,6 +694,53 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot surviving-rats"
+
+SLIDER
+25
+265
+199
+298
+number-of-rats
+number-of-rats
+10
+50
+20.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+29
+302
+203
+335
+starting-radius
+starting-radius
+5
+max-pxcor - 10
+64.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+36
+550
+168
+585
+Switch Layout
+alternate-topology
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
