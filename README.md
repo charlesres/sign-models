@@ -8,6 +8,12 @@ to represent how rats can use signs to determine the location of food.
 ### Rats
 ![Rat Icon](http://ccl.northwestern.edu/netlogo/5.0/docs/images/defaultlinkshape.gif)
 
+ - White Rats
+ ![White Rats](/images/whiterats.png)
+ ![Gray Rats](/images/grayrats.png)
+ ![Orange Rats](/images/orangerats.png)
+ ![Green Rats](/images/greenrats.png)
+
 ### Food Source
 
 ## Basic Model Info
