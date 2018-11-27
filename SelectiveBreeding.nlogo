@@ -226,6 +226,7 @@ to setup
   clear-all
   set generation 0
   generate-food 5
+  generate-spots
   generate-rats number-of-rats
   initialize
   ask one-of rats [ pen-down ]
@@ -343,9 +344,10 @@ end
 
 to regenerate-world
    generate-food 7
+   generate-spots
 
    ask rats with [ survived? = false ] [ die ]
-   if rats = no-turtles [ stop ] ;; generate-rats 5 ]
+   if rats = no-turtles [ stop ] ;; generate-rats 5
 
    ask rats [ ;; deviations of themselves
      readjust-wiggle-deviation
@@ -387,7 +389,7 @@ end
 
 to-report adjust-percentage [ value ]
   if value < 0 [ report 0 ]
-  if value > 180 [ report 0 ]
+  if value > 100 [ report 100 ]
   report value
 end
 
@@ -438,8 +440,7 @@ to global-tick ; the generational clock
   set number-of-previous-food-sources count food-sources
   ifelse world-timer = 600 [
     set generation generation + 1
-    set surviving-rats count rats with [ found-food? = true ]
-    set surviving-signs count signs
+    set surviving-rats count rats with [ survived? = true ]
     set world-timer 0
     ask patches [ set pcolor black ]
     regenerate-world
@@ -516,6 +517,7 @@ to move-rats
 end
 
 to go ;; go will start the process for the rats
+  if not any? rats [ stop ]
   move-rats
   generate-flags-if-possible
   global-tick
@@ -539,8 +541,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -100
 100
@@ -705,7 +707,7 @@ PLOT
 250
 210
 400
-Feed Rats
+Fed Rats
 NIL
 NIL
 0.0
