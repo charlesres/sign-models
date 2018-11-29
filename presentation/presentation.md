@@ -24,7 +24,7 @@ A field of scientific research that uses genetic methods to investigate the natu
 >   - Construction
 >   - Navigation
 
-## Collaborative Traits (Helpful or Foolish)
+## Defining Collaborative Traits (Helpful or Foolish)
 
 > - Does not guarantee passing on an organism's genes
 > - Behavior can help other organisms
