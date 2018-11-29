@@ -1,5 +1,14 @@
 # Welcome to the Sign Model Repo
 
+## Basic Model Info
+
+The model experiments with behavioral genetics and how rats behave when the characteristic of following signs is passed on.
+This was based on the Russian Fox Experiment, which started in 1959 by Dmitry Belyayev.
+
+### Goal
+
+To demonstrate that artificial constraints (selective breeding) can influence how rats behave for finding foods.
+
 ## Legend
 
 In the SelectiveBreeding model, there are two major agents that interact
@@ -22,6 +31,5 @@ to represent how rats can use signs to determine the location of food.
 
  ![Food Source](/images/foodsource.png)
 
-## Basic Model Info
-
-The model is meant to highlight how signs can influence behavior over time
+### Toggles
+ ![Toggles]()
