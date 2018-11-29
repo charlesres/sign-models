@@ -40,4 +40,4 @@ to represent how rats can use signs to determine the location of food.
  ![Food Source](/images/foodsource.png)
 
 ### Toggles
- ![Toggles]()
+ ![Toggles](images/toggle.png)
