@@ -692,9 +692,9 @@ HORIZONTAL
 
 PLOT
 10
-250
+290
 210
-400
+440
 Fed Rats
 NIL
 NIL
@@ -740,9 +740,9 @@ HORIZONTAL
 
 BUTTON
 10
-400
+440
 157
-433
+473
 Toggle Topology
 alternate-topology
 NIL
@@ -757,9 +757,9 @@ NIL
 
 MONITOR
 10
-505
+545
 167
-562
+602
 NIL
 report-generation
 17
@@ -768,9 +768,9 @@ report-generation
 
 BUTTON
 10
-430
+470
 192
-463
+503
 Toggle Sign Following
 set signs-enabled? not signs-enabled?
 NIL
@@ -823,9 +823,9 @@ PENS
 
 BUTTON
 10
-460
+500
 160
-493
+533
 Toggle Obstacles
 set spots-enabled? not spots-enabled?\nif spots-enabled? [ generate-spots ]
 NIL
@@ -840,9 +840,9 @@ NIL
 
 SLIDER
 10
-565
-220
-598
+250
+185
+283
 range-of-max-turning-angle
 range-of-max-turning-angle
 0
