@@ -1,6 +1,13 @@
-% Bad Rats, Bad Rats : What are you going to do?
+% Behavioral Evolution Rodent Model: Bat Rats™
 % Charly Resendiz (`charly.resendiz@northwestern.edu`)
 % Nov 7, 2018
+
+## The Goal
+
+> - To demonstrate that selective breeding can influence path finding strategies
+> - To show multiple phases to evolution, especially with behaviour
+> - The model does not simulate a naturally occuring phenomenon
+>   - Rats, but with the ability to read signs
 
 ## Behavioral Evolution Model
 
@@ -35,6 +42,8 @@ You begin with 15 rodents, outside a specified radius, with the food huddled in 
 > - Likelihood to drop a sign (units : %)
 > - Range of possible sign angle error (units : degrees)
 > - *Maximum Random Turning Angle* (MRTA) (unit : degrees)
+> - Energy (not configurable)
+> - Topology
 
 ## Color Sheet
 
@@ -54,6 +63,7 @@ You begin with 15 rodents, outside a specified radius, with the food huddled in 
 
 > - Pen (Visualize a rat's maximum random turning angle)
 > - Range's Maximum Turning Angle
+> - Probability Range
 
 ## Observations
 
@@ -68,8 +78,15 @@ Depending on the inital configurations, the rats pass on certain behaviors
 <!--
   ## FAQ
 
-> - Does it represent a phenomenon? No, I figured mice mazes would be interesting
+> - Does it represent a phenomenon? No, I figured mice mazes would be interestngi
 > - How does this simulate behavior genetics? Through passing on the likelihood of
     acting a certain manner
 > - Do the plots help with demonstrating the point of generational inheritance?
     I would say yes, because we can track the difference in each generation -->
+
+## Possible Extensions
+
+> - Adding vision
+> - Adding probability of following sign
+> - User-defined inital energy
+> - Pre-defined behaviors as an option
