@@ -9,7 +9,6 @@ globals [
   follow-sign-enabled?
   spots-enabled?
   signs-enabled?
-  global-energy-limit
 ]
 
 ; What is this code for?
@@ -48,23 +47,19 @@ rats-own [
   likelihood-to-drop   ;; the probability of dropping a sign every tick
   sign-deviation       ;; the range of possible angle deviation
   probability-of-lying ;; the probability of lying about the direction of the food source
-  sign-energy
 
   location-of-xsign    ;; x-coordinate of the food source
   location-of-ysign    ;; y-coordinate of the food source
 
   found-sign?          ;; indicator for having found a sign
-  trigger-location-x   ;;
-  trigger-location-y   ;;
 
   found-food?          ;; indicator for having found food
   survived?            ;; indicator for surviving rats
-  heading-out?         ;;
-  can-drop-flag?       ;;
-  the-sign-that-helped ;;
-  number-eaten         ;;
-  viewed-sign-color
-  own-sign
+  can-drop-flag?       ;; indicator for rat that can drop a sign
+  the-sign-that-helped ;; agent that placed the sign
+  number-eaten         ;; number of a food item eaten
+  viewed-sign-color    ;; indicator for determining flag
+  own-sign             ;; reference to sign that was placed
 ]
 
 
@@ -80,8 +75,10 @@ to-report random-wiggle
   report (wiggle-preference + 5 - random 10)
 end
 
-to-report random-likely
-  report (likelihood-preference + 5 - random 10)
+; Adjusts the likelihood of dropping a sign
+to-report adjust-likelihood-to-drop-sign
+  let preference 0.01
+  report (likelihood-preference + preference - random (2 * preference))
 end
 
 to-report random-sign-dev
@@ -89,28 +86,24 @@ to-report random-sign-dev
 end
 
 to-report random-lying
-  report (lying-preference + 5 - random 10)
+  let preference 0.01
+  report (lying-preference + preference - random (2 * preference))
 end
 
 to configure-default-rat
     let maxturning 90
     let range-of-turning-angle range-of-max-turning-angle
     set wiggle-deviation (range-of-turning-angle / 2 - random range-of-turning-angle) + maxturning ; range of possible turn (degrees)
-    set likelihood-to-drop random 5 ; chance of dropping a sign (%)
+    set likelihood-to-drop random 0.05 ; chance of dropping a sign (%)
     set sign-deviation random 45    ; range of deviation of a sign (%)
     set probability-of-lying random 10 ; probability of deciding to lie
 
     set location-of-xsign 0
     set location-of-ysign 0
-    set sign-energy global-energy-limit
-
     set found-sign? false
-    set trigger-location-x 0
-    set trigger-location-y 0
 
     set found-food? false ;; possibly give a review
     set survived? false
-    set heading-out? false
     set can-drop-flag? false
     set the-sign-that-helped nobody
     set number-eaten 0
@@ -128,22 +121,19 @@ to generate-rats [ number ]
     select-a-location
     set color gray
     set shape "default"
-    set size 4
+    set size 5
   ]
 end
 
 to reproduction-of-rats [ number wig-dev likely sign-dev prob-lie ]
   create-rats number [
     set wiggle-deviation adjust-degrees (wig-dev + random-wiggle)         ;; adjust wiggle-deviation
-    set likelihood-to-drop adjust-percentage (likely + random-likely)     ;; adjust probability to drop a sign
+    set likelihood-to-drop adjust-percentage (likely + adjust-likelihood-to-drop-sign)     ;; adjust probability to drop a sign
     set sign-deviation adjust-degrees (sign-dev + random-sign-dev)        ;; adjust the degree error on sign placement
     set probability-of-lying adjust-percentage (prob-lie + random-lying)  ;; adjust probability of lying
 
     set location-of-xsign 0
     set location-of-ysign 0
-    set trigger-location-x 0
-    set trigger-location-y 0
-    set sign-energy ( random 5 - 10 ) + global-energy-limit
 
     set found-food? false ;; possibly give a review
     set found-sign? false
@@ -159,7 +149,7 @@ to reproduction-of-rats [ number wig-dev likely sign-dev prob-lie ]
 end
 
 to draw-radius-bound
-  ;ask patches in-radius starting-radius  [set pcolor scale-color red 1.8 0 10 ]
+  ask patches in-radius starting-radius  [set pcolor scale-color red 1.8 0 10 ]
   ask patches in-radius (starting-radius * (.75)) [set pcolor scale-color green 1.8 0 10 ]
 end
 
@@ -176,7 +166,9 @@ to generate-food [ num ]
       [ set incr-num cap - count food-sources ]
       [ set incr-num num ]
     create-food-sources incr-num [
-        setxy (0 + (40 - random 80)) (0 + (40 - random 80))
+        let coordinate-bound-x 15 - random 30
+        let coordinate-bound-y 15 - random 30
+        setxy (0 + coordinate-bound-x) (0 + coordinate-bound-y)
         set   color orange
         set   size  4
         let   xcore xcor
@@ -200,7 +192,6 @@ to initialize
   set follow-sign-enabled? true
   set spots-enabled? false
   set signs-enabled? true
-  set global-energy-limit 12
 end
 
 to-report extract-number-eaten [ one-rat ]
@@ -229,7 +220,7 @@ end
 
 to setup
   clear-all
-  random-seed 2301
+  random-seed 100034
   set generation 0
   initialize
   generate-food 10
@@ -341,9 +332,10 @@ to readjust-wiggle-deviation
    ]
 end
 
-to readjust-likelihood
+to readjust-likelihood-to-drop-sign
    ifelse likelihood-to-drop > 0 and likelihood-to-drop < 90 [
-     set likelihood-to-drop adjust-percentage (likelihood-to-drop + (likelihood-preference + random 20 - 10))
+     let preference 0.1
+     set likelihood-to-drop adjust-percentage (likelihood-to-drop + (likelihood-preference + preference - random (2 * preference)))
    ] [
      set likelihood-to-drop adjust-percentage likelihood-to-drop
    ]
@@ -358,7 +350,7 @@ to regenerate-world
 
    ask rats [ ;; deviations of themselves
      readjust-wiggle-deviation
-     readjust-likelihood
+     readjust-likelihood-to-drop-sign
      set number-eaten 0
 
      move-to one-of patches with [ pcolor = black ]
@@ -367,7 +359,6 @@ to regenerate-world
      ]
      set found-food? false
      set found-sign? false
-     set sign-energy global-energy-limit
      set survived? false
      set can-drop-flag? false
      set own-sign nobody
@@ -421,31 +412,27 @@ to-report report-generation
 end
 
 to generate-flags-if-possible
-  if count rats > 3 [
-    ask rats with [ sign-energy < 5 ] [ die ]
-  ]
   if any? (rats with [ can-drop-flag? = true ]) and signs-enabled? [ ;; it keeps generating triangles
         ask rats with [ can-drop-flag? = true ] [
-        if likelihood-to-drop > random 100 [
-        let probability-lying probability-of-lying
-        if any? food-sources [
-          set sign-energy sign-energy - 2
-          hatch-signs 1 [
-              set shape "arrow" set color white set size 3
-              set creator myself
-              let specified-food food-sources
-              let direction-x [ xcor ] of one-of specified-food
-              let direction-y [ ycor ] of one-of specified-food
+          if likelihood-to-drop > random 100 [
+            let probability-lying probability-of-lying
+            if any? food-sources [
+              hatch-signs 1 [
+                  set shape "arrow" set color white set size 3
+                  set creator myself
+                  let specified-food food-sources
+                  let direction-x [ xcor ] of one-of specified-food
+                  let direction-y [ ycor ] of one-of specified-food
 
-              left random [ sign-deviation ] of myself
-              right random [ sign-deviation ] of myself
-              setxy direction-x direction-y
+                  left random [ sign-deviation ] of myself
+                  right random [ sign-deviation ] of myself
+                  ;;facexy direction-x direction-y
 
-              ifelse probability-lying > random 100 [
-                  set color red
-                  facexy random-xcor random-ycor
-              ] [ facexy direction-x direction-y
-                  set color yellow ]]]]]]
+                  ifelse probability-lying > random 100 [
+                      set color red
+                      facexy random-xcor random-ycor
+                  ] [ facexy direction-x direction-y
+                      set color yellow ]]]]]]
 end
 
 to food-viewed-instruction
@@ -482,7 +469,7 @@ to eating-animation
   ]
   if animation-timer != 20 [
     if animation-timer = 0 [
-      create-turtles 1 [ set shape "circle" set color magenta setxy 0 0 set size 4 facexy 0 100 ]
+      create-turtles 1 [ set shape "circle" set color magenta setxy 0 0 set size 5 facexy 0 100 ]
     ]
     ask turtles with [ shape = "circle" ] [ fd 1 ]
     if animation-timer = 19 [
@@ -509,10 +496,6 @@ to go ;; go will start the process for the rats
   move-rats
   generate-flags-if-possible
   global-tick
-end
-
-to test
-  create-rats 1 [ configure-default-rat setxy 0 0 ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -684,7 +667,7 @@ lying-preference
 lying-preference
 -10
 10
--3.0
+0.0
 1
 1
 NIL
@@ -717,7 +700,7 @@ number-of-rats
 number-of-rats
 10
 50
-20.0
+16.0
 1
 1
 NIL
@@ -732,7 +715,7 @@ starting-radius
 starting-radius
 5
 max-pxcor - 10
-36.0
+53.0
 1
 1
 NIL
@@ -847,7 +830,7 @@ range-of-max-turning-angle
 range-of-max-turning-angle
 0
 70
-31.0
+50.0
 1
 1
 NIL
